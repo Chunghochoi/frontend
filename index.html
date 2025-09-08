@@ -22,10 +22,7 @@
                     <i class="fas fa-plus"></i> Đăng tải khóa học
                 </button>
                 <div id="user-actions">
-                    <button class="btn btn-secondary cursor-pointer" id="loginBtn">
-                        <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                    </button>
-                </div>
+                    </div>
                 <button class="theme-toggle cursor-pointer" id="themeToggle" title="Đổi giao diện">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -74,23 +71,51 @@
 
     <div class="modal" id="authModal">
         <div class="modal-content">
-            <button class="modal-close cursor-pointer" id="closeAuthModal"><i class="fas fa-times"></i></button>
-            <h3 class="modal-title">Đăng nhập</h3>
-            <form id="loginForm">
+            <button class="modal-close cursor-pointer"><i class="fas fa-times"></i></button>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active cursor-pointer" data-tab="login">Đăng nhập</button>
+                <button class="auth-tab cursor-pointer" data-tab="register">Đăng ký</button>
+            </div>
+
+            <form id="loginForm" class="auth-form active">
                 <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" required placeholder="your.email@example.com">
+                    <label for="loginIdentifier">Email hoặc Tên đăng nhập</label>
+                    <input type="text" id="loginIdentifier" required placeholder="chung@coursehub.com hoặc ChungHo">
+                </div>
+                 <div class="form-group">
+                    <label for="loginPassword">Mật khẩu</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn btn-primary cursor-pointer" style="width: 100%;">
                     <i class="fas fa-sign-in-alt"></i> Đăng nhập
                 </button>
             </form>
+
+            <form id="registerForm" class="auth-form">
+                 <div class="form-group">
+                    <label for="registerUsername">Tên đăng nhập</label>
+                    <input type="text" id="registerUsername" required placeholder="vd: chunghochoi">
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required placeholder="your.email@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Mật khẩu</label>
+                    <input type="password" id="registerPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary cursor-pointer" style="width: 100%;">
+                    <i class="fas fa-user-plus"></i> Đăng ký
+                </button>
+            </form>
         </div>
     </div>
 
+
     <div class="modal" id="uploadModal">
         <div class="modal-content">
-            <button class="modal-close cursor-pointer" id="closeUploadModal"><i class="fas fa-times"></i></button>
+            <button class="modal-close cursor-pointer"><i class="fas fa-times"></i></button>
             <h3 class="modal-title"><i class="fas fa-upload"></i> Đăng tải khóa học mới</h3>
             <form id="uploadForm">
                 <div class="form-group">
@@ -122,7 +147,7 @@
 
     <div class="modal" id="adminModal">
         <div class="modal-content" style="max-width: 700px;">
-            <button class="modal-close cursor-pointer" id="closeAdminModal"><i class="fas fa-times"></i></button>
+            <button class="modal-close cursor-pointer"><i class="fas fa-times"></i></button>
             <h3 class="modal-title"><i class="fas fa-user-shield"></i> Quản lý người dùng</h3>
             <div id="userList" class="user-list">
                 </div>

@@ -18,6 +18,8 @@ body {
     color: var(--text-primary);
     margin: 0;
     overflow-x: hidden;
+    /* --- CON TRỎ MỚI --- */
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="24" font-size="24" fill="%2300ffff">_</text></svg>'), auto;
 }
 
 body.light-theme {
@@ -33,7 +35,9 @@ body.light-theme {
 }
 
 /* --- CURSOR TÙY CHỈNH --- */
-.cursor-pointer { cursor: pointer; }
+.cursor-pointer {
+     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="24" font-size="28" fill="%2300ffff">▶</text></svg>'), pointer;
+}
 
 /* --- HEADER & NAVIGATION --- */
 header {
@@ -85,6 +89,12 @@ nav {
     cursor: not-allowed;
 }
 
+.btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 255, 255, 0.25);
+}
+
+
 .btn-primary {
     background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
     color: var(--text-primary);
@@ -113,7 +123,17 @@ main {
 section { margin-bottom: 4rem; }
 
 .hero { text-align: center; padding: 4rem 0; }
-.hero h1 { font-size: 3.5rem; }
+.hero h1 {
+    font-size: 3.5rem;
+    animation: pulse 2.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; text-shadow: 0 0 10px var(--accent-neon); }
+    50% { opacity: 0.8; text-shadow: 0 0 20px var(--accent-purple); }
+    100% { opacity: 1; text-shadow: 0 0 10px var(--accent-neon); }
+}
+
 .hero p { font-size: 1.2rem; color: var(--text-secondary); }
 
 .section-title {
@@ -255,6 +275,27 @@ section { margin-bottom: 4rem; }
     border-color: var(--accent-neon);
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
 }
+.auth-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-glow);
+}
+.auth-tab {
+    flex: 1;
+    padding: 0.8rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 1rem;
+}
+.auth-tab.active {
+    color: var(--accent-neon);
+    border-bottom: 2px solid var(--accent-neon);
+}
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+
 
 /* --- ADMIN PANEL --- */
 .user-list { max-height: 400px; overflow-y: auto; }
@@ -294,7 +335,18 @@ section { margin-bottom: 4rem; }
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border-left: 5px solid;
     margin-top: 1rem;
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideIn 0.5s forwards;
 }
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 
 /* --- HIỆU ỨNG NỀN --- */
 .bg-animation {

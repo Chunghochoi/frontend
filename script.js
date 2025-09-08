@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         updateUIForLoggedInUser();
         loadCourses();
-        initializeBackgroundAnimation();
     }
 
     // --- TẢI DỮ LIỆU ---
     async function loadCourses() {
         try {
             const response = await fetch(`${API_URL}/api/courses`);
+            if (!response.ok) throw new Error('Network response was not ok');
             const courses = await response.json();
             displayCourses(courses);
         } catch (error) {
@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const recentGrid = document.getElementById('recentCourses');
         courseGrid.innerHTML = '';
         recentGrid.innerHTML = '';
+
+        if (!Array.isArray(courses)) {
+             console.error('Dữ liệu khóa học không hợp lệ:', courses);
+             showNotification('Định dạng dữ liệu khóa học không đúng.', 'error');
+             return;
+        }
 
         const hotCourses = [...courses].sort((a, b) => (b.views || 0) - (a.views || 0));
         hotCourses.forEach(course => courseGrid.appendChild(createCourseCard(course)));
@@ -97,27 +103,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>`;
             
             document.getElementById('logoutBtn').addEventListener('click', logout);
-            adminPanelBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+            adminPanelBtn.style.display = (isAdmin || currentUser.role === 'SUB_ADMIN') ? 'inline-flex' : 'none';
             uploadBtn.disabled = false;
         } else {
             userActionsDiv.innerHTML = `
-                <button class="btn btn-secondary cursor-pointer" id="loginBtn">
-                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                <button class="btn btn-secondary cursor-pointer" id="authBtn">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập / Đăng ký
                 </button>`;
             
-            document.getElementById('loginBtn').addEventListener('click', () => toggleModal('authModal', true));
+            document.getElementById('authBtn').addEventListener('click', () => toggleModal('authModal', true));
             adminPanelBtn.style.display = 'none';
             uploadBtn.disabled = true;
         }
     }
 
     // --- XÁC THỰC VÀ HÀNH ĐỘNG ---
-    async function login(email) {
+    async function login(identifier, password) {
         try {
             const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ identifier, password })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message);
@@ -131,6 +137,27 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(error.message, 'error');
         }
     }
+    
+    async function register(username, email, password) {
+        try {
+            const response = await fetch(`${API_URL}/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+
+            showNotification(data.message, 'success');
+            // Chuyển sang tab đăng nhập sau khi đăng ký thành công
+            document.querySelector('.auth-tab[data-tab="login"]').click();
+            document.getElementById('loginIdentifier').value = email;
+
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    }
+
 
     function logout() {
         currentUser = null;
@@ -174,6 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- ADMIN PANEL ---
     async function openAdminPanel() {
+        if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUB_ADMIN')) {
+            showNotification('Bạn không có quyền truy cập.', 'error');
+            return;
+        }
         const userListDiv = document.getElementById('userList');
         userListDiv.innerHTML = 'Đang tải...';
         toggleModal('adminModal', true);
@@ -186,12 +217,17 @@ document.addEventListener('DOMContentLoaded', () => {
             users.forEach(user => {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
+                
+                // Admin có thể thăng cấp cho Member
+                const canPromote = currentUser.role === 'ADMIN' && user.role === 'MEMBER';
+                
                 userItem.innerHTML = `
                     <div class="user-info">
                         <span class="username">${user.username}</span>
+                        (<span class="email">${user.email}</span>)
                         <span class="role ${user.role}">${user.role}</span>
                     </div>
-                    <button class="btn promote-btn" data-user-id="${user.id}" ${user.role !== 'MEMBER' ? 'disabled' : ''}>
+                    <button class="btn promote-btn" data-user-id="${user.id}" ${!canPromote ? 'disabled' : ''}>
                         ${user.role === 'MEMBER' ? 'Thăng cấp' : 'Đã thăng cấp'}
                     </button>`;
                 userListDiv.appendChild(userItem);
@@ -227,15 +263,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('notification-container');
         const notification = document.createElement('div');
         notification.className = 'notification';
-        const colors = { success: 'green', error: 'red', info: 'blue' };
+        const colors = { success: '#28a745', error: '#dc3545', info: '#17a2b8' };
         notification.style.borderColor = colors[type];
         notification.textContent = message;
         container.appendChild(notification);
-        setTimeout(() => notification.remove(), 4000);
+        setTimeout(() => {
+             notification.style.animation = 'slideOut 0.5s forwards';
+             setTimeout(() => notification.remove(), 500);
+        }, 4000);
     }
     
-    function initializeBackgroundAnimation() { /* Có thể thêm hiệu ứng nếu muốn */ }
-
     // --- LẮNG NGHE SỰ KIỆN ---
     function setupEventListeners() {
         // Đóng Modal
@@ -247,11 +284,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('uploadBtn').addEventListener('click', () => toggleModal('uploadModal', true));
         document.getElementById('adminPanelBtn').addEventListener('click', openAdminPanel);
 
+        // Chuyển Tab Đăng nhập / Đăng ký
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.dataset.tab;
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(`${target}Form`).classList.add('active');
+            });
+        });
+
+
         // Form Submit
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            login(document.getElementById('loginEmail').value);
+            login(
+                document.getElementById('loginIdentifier').value,
+                document.getElementById('loginPassword').value
+            );
         });
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            register(
+                document.getElementById('registerUsername').value,
+                document.getElementById('registerEmail').value,
+                document.getElementById('registerPassword').value
+            );
+        });
+
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
             e.preventDefault();
             handleCourseUpload(
@@ -284,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Theme Toggle
         document.getElementById('themeToggle').addEventListener('click', () => {
             document.body.classList.toggle('light-theme');
+            const icon = document.querySelector('#themeToggle i');
+            icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
         });
     }
 
