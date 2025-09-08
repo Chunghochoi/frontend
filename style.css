@@ -1,4 +1,6 @@
-/* Dán toàn bộ nội dung trong thẻ <style> từ file index.html gốc của bạn vào đây */
+/* Dán toàn bộ nội dung trong thẻ <style> từ file index.html gốc của bạn vào đây
+   và các bổ sung cho action buttons/badges đã được tôi cung cấp. */
+
 * {
     margin: 0;
     padding: 0;
@@ -15,6 +17,10 @@
     --text-primary: #ffffff;
     --text-secondary: #b8b8b8;
     --border-glow: rgba(0, 255, 255, 0.3);
+    --modal-bg: rgba(0, 0, 0, 0.7);
+    --modal-content-bg: #1a1a2e;
+    --input-bg: #0a0a0f;
+    --input-border: #334;
 }
 
 body {
@@ -23,22 +29,323 @@ body {
     color: var(--text-primary);
     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><text y="15" font-size="12" fill="%2300ffff">_</text></svg>'), auto;
     overflow-x: hidden;
+    line-height: 1.6;
 }
 
+body.light-theme {
+    --bg-primary: #f0f2f5;
+    --bg-secondary: #ffffff;
+    --bg-card: #e0e2e6;
+    --accent-neon: #007bff;
+    --accent-purple: #6c5ce7;
+    --accent-green: #28a745;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-glow: rgba(0, 123, 255, 0.3);
+    --modal-bg: rgba(0, 0, 0, 0.5);
+    --modal-content-bg: #ffffff;
+    --input-bg: #f9f9f9;
+    --input-border: #cccccc;
+}
+
+/* Custom Cursors */
 .cursor-pointer {
     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><text y="15" font-size="14" fill="%2300ffff">▶</text></svg>'), pointer;
 }
 .cursor-delete {
-     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="5" y="18" font-size="18" fill="red">🗑️</text></svg>'), pointer;
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="5" y="18" font-size="18" fill="red">🗑️</text></svg>'), pointer;
 }
 .cursor-admin {
     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="5" y="18" font-size="18" fill="gold">👑</text></svg>'), pointer;
 }
 
 
-/* ... (Toàn bộ CSS còn lại của bạn) ... */
+/* Layout */
+header {
+    background: var(--bg-secondary);
+    padding: 1.5rem 3rem;
+    border-bottom: 1px solid var(--border-glow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
 
-/* Thêm CSS cho các nút actions */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--accent-neon);
+    text-shadow: 0 0 8px var(--accent-neon);
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    transition: all 0.4s ease;
+    z-index: -1;
+}
+
+.btn-primary:hover::before {
+    left: 0;
+}
+
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-glow);
+}
+
+.btn-secondary:hover {
+    background: var(--accent-purple);
+    border-color: var(--accent-neon);
+    color: var(--text-primary);
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: color 0.3s ease, background 0.3s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--accent-neon);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+section {
+    margin-bottom: 4rem;
+}
+
+.hero {
+    text-align: center;
+    padding: 6rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero h1 {
+    font-size: 4.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-neon);
+    text-shadow: 0 0 20px var(--accent-neon);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hero p {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); text-shadow: 0 0 10px var(--accent-neon); }
+    50% { transform: scale(1.02); text-shadow: 0 0 25px var(--accent-neon); }
+    100% { transform: scale(1); text-shadow: 0 0 10px var(--accent-neon); }
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin-bottom: 2.5rem;
+    text-align: center;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.section-title i {
+    color: var(--accent-neon);
+    margin-right: 0.8rem;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--accent-neon), transparent);
+    border-radius: 2px;
+}
+
+
+/* Search */
+.search-section {
+    text-align: center;
+    margin-bottom: 5rem;
+}
+
+.search-container {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 2px solid var(--border-glow);
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+}
+
+.search-icon {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+.search-input {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: 'Fira Code', monospace;
+    font-size: 1.1rem;
+    padding: 0.5rem 0;
+}
+
+.search-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+
+/* Course Grid */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+}
+
+.course-card {
+    background: var(--bg-card);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.course-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 255, 255, 0.3);
+    border-color: var(--accent-neon);
+}
+
+.course-image {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: var(--accent-neon);
+    border-bottom: 2px solid var(--border-glow);
+}
+
+.course-content {
+    padding: 1.5rem;
+}
+
+.course-title {
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+.course-author {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+}
+
+.course-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.course-stats span i {
+    margin-right: 0.5rem;
+    color: var(--accent-neon);
+}
+
+.course-category {
+    background: var(--accent-purple);
+    padding: 0.3rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+/* Course Actions (Admin/Owner) */
 .course-actions {
     position: absolute;
     top: 10px;
@@ -48,7 +355,7 @@ body {
     background: rgba(0,0,0,0.5);
     padding: 5px;
     border-radius: 8px;
-    opacity: 0;
+    opacity: 0; /* Mặc định ẩn, chỉ hiện khi hover card */
     transition: opacity 0.3s ease;
 }
 .course-card:hover .course-actions {
@@ -64,29 +371,313 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.action-btn:hover {
+    transform: scale(1.1);
 }
 .action-btn.delete-btn:hover {
-    background: #e74c3c;
+    background: #e74c3c; /* Red */
 }
 .action-btn.edit-btn:hover {
-    background: #3498db;
+    background: #3498db; /* Blue */
 }
 .action-btn.admin-btn:hover {
-    background: #f1c40f;
+    background: #f1c40f; /* Yellow */
 }
 
-/* Badge */
+/* User Badges */
 .user-badge {
     position: absolute;
     bottom: 10px;
     left: 10px;
     background: var(--accent-purple);
     color: white;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.user-badge i {
+    font-size: 0.9em;
 }
 .admin-badge {
-    background: linear-gradient(45deg, #ffd700, #ff8c00);
+    background: linear-gradient(45deg, #ffd700, #ff8c00); /* Gold/Orange */
+    color: #333; /* Darker text for contrast */
+}
+
+/* Footer */
+footer {
+    background: var(--bg-secondary);
+    padding: 3rem;
+    margin-top: 5rem;
+    border-top: 1px solid var(--border-glow);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-links a {
+    color: var(--accent-neon);
+    text-decoration: none;
+    margin: 0 1rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-purple);
+}
+
+
+/* Modals */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 2000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: var(--modal-bg); /* Black w/ opacity */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
+.modal-content {
+    background-color: var(--modal-content-bg);
+    margin: auto;
+    padding: 2.5rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    border: 1px solid var(--border-glow);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-close {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: none;
+    border: none;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+    color: var(--accent-neon);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.8rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"], /* Thêm selector cho email */
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+}
+
+/* Loading spinner */
+.loading {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notifications */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 5px solid; /* For different types */
+    animation: slideInRight 0.5s ease-out forwards;
+    min-width: 250px;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.notification i {
+    font-size: 1.2rem;
+}
+
+/* Background Animation */
+.bg-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(16, 33, 62, 0.8) 0%, rgba(10, 10, 15, 1) 70%);
+}
+
+.dot {
+    position: absolute;
+    background-color: var(--accent-neon);
+    border-radius: 50%;
+    opacity: 0;
+    animation: dotFadeMove 15s infinite;
+    box-shadow: 0 0 10px var(--accent-neon), 0 0 20px var(--accent-neon);
+}
+
+@keyframes dotFadeMove {
+    0% {
+        transform: translate(0, 0) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    80% {
+        opacity: 0;
+    }
+    100% {
+        transform: translate(var(--x-end), var(--y-end)) scale(0);
+        opacity: 0;
+    }
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem 1.5rem;
+    }
+    nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .nav-buttons {
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .hero h1 {
+        font-size: 3rem;
+    }
+    .hero p {
+        font-size: 1.2rem;
+    }
+    .section-title {
+        font-size: 2rem;
+    }
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+    .course-card {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    .course-title {
+        font-size: 1.4rem;
+    }
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    main {
+        padding: 0 1rem;
+    }
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    .hero p {
+        font-size: 1rem;
+    }
+    .section-title {
+        font-size: 1.8rem;
+    }
+    .nav-buttons {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+    }
 }

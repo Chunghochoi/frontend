@@ -6,7 +6,7 @@
     <title>CourseHub Infinity - Nơi tri thức là vô hạn và miễn phí</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
     <div class="bg-animation" id="bgAnimation"></div>
@@ -87,8 +87,7 @@
                 <h3 class="modal-title">Đăng nhập</h3>
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="text" required placeholder="your@email.com">
-                </div>
+                    <input type="email" required placeholder="your@email.com"> </div>
                 <div class="form-group">
                     <label>Mật khẩu</label>
                     <input type="password" required placeholder="••••••••">
@@ -101,7 +100,14 @@
     </div>
 
     <div class="modal" id="uploadModal">
-        </div>
+        <div class="modal-content">
+            <button class="modal-close cursor-pointer" id="closeUploadModal"><i class="fas fa-times"></i></button>
+            <h3 class="modal-title">Đăng tải khóa học mới</h3>
+            <p>Chức năng này đang được phát triển...</p>
+            </div>
+    </div>
+    
+    <div id="notification-container"></div>
 
     <script src="script.js"></script>
 </body>
