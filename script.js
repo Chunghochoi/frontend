@@ -1,67 +1,59 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // !!! QUAN TRỌNG: Thay thế URL này bằng URL backend của bạn trên Render.com
+document.addEventListener('DOMContentLoaded', function() {
+    // --- CONFIG ---
     const API_URL = 'https://coursehub-backend.onrender.com';
+    let currentUser = null;
 
-    let currentUser = null; // Biến toàn cục lưu trữ thông tin người dùng đã đăng nhập
+    // --- INITIALIZE ---
+    initializeApp();
 
-    // --- KHỞI TẠO CÁC CHỨC NĂNG CHÍNH ---
     function initializeApp() {
-        setupEventListeners();
-        updateUIForLoggedInUser();
+        initializeBackgroundAnimation();
         loadCourses();
+        setupEventListeners();
+        setupFooter();
     }
 
-    // --- TẢI DỮ LIỆU ---
+    // --- API HANDLERS ---
+    async function apiRequest(endpoint, options = {}) {
+        try {
+            const response = await fetch(API_URL + endpoint, options);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Có lỗi xảy ra');
+            }
+            return data;
+        } catch (error) {
+            showNotification(error.message, 'error');
+            throw error;
+        }
+    }
+
+    // --- COURSE HANDLING ---
     async function loadCourses() {
         try {
-            const response = await fetch(`${API_URL}/api/courses`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const courses = await response.json();
-            displayCourses(courses);
+            const courses = await apiRequest('/api/courses');
+            const courseGrid = document.getElementById('courseGrid');
+            const recentGrid = document.getElementById('recentCourses');
+            courseGrid.innerHTML = '';
+            recentGrid.innerHTML = '';
+
+            const hotCourses = [...courses].sort((a, b) => (b.views || 0) - (a.views || 0));
+            hotCourses.forEach(course => courseGrid.appendChild(createCourseCard(course)));
+
+            const recentCourses = [...courses].sort((a, b) => b.id - a.id).slice(0, 4);
+            recentCourses.forEach(course => recentGrid.appendChild(createCourseCard(course)));
         } catch (error) {
-            console.error('Lỗi khi tải khóa học:', error);
-            showNotification('Không thể tải danh sách khóa học.', 'error');
+            console.error('Failed to load courses:', error);
         }
-    }
-
-    // --- HIỂN THỊ DỮ LIỆU ---
-    function displayCourses(courses) {
-        const courseGrid = document.getElementById('courseGrid');
-        const recentGrid = document.getElementById('recentCourses');
-        courseGrid.innerHTML = '';
-        recentGrid.innerHTML = '';
-
-        if (!Array.isArray(courses)) {
-             console.error('Dữ liệu khóa học không hợp lệ:', courses);
-             showNotification('Định dạng dữ liệu khóa học không đúng.', 'error');
-             return;
-        }
-
-        const hotCourses = [...courses].sort((a, b) => (b.views || 0) - (a.views || 0));
-        hotCourses.forEach(course => courseGrid.appendChild(createCourseCard(course)));
-
-        const recentCourses = [...courses].sort((a, b) => b.id - a.id).slice(0, 4);
-        recentCourses.forEach(course => recentGrid.appendChild(createCourseCard(course)));
     }
 
     function createCourseCard(course) {
         const card = document.createElement('div');
         card.className = 'course-card cursor-pointer';
-
-        const userRole = currentUser ? currentUser.role : null;
-        const userId = currentUser ? currentUser.id : null;
-        
-        let canDelete = false;
-        if (userRole === 'ADMIN') {
-            canDelete = true;
-        } else if (userRole === 'SUB_ADMIN' && course.ownerRole !== 'ADMIN') {
-            canDelete = true;
-        } else if (course.ownerId === userId) {
-            canDelete = true;
-        }
-
         card.innerHTML = `
-            <div class="course-image"><i class="${course.icon || 'fas fa-book'}"></i></div>
+            <div class="course-image">
+                <i class="${course.icon || 'fas fa-book-open'}" style="z-index: 1; position: relative;"></i>
+            </div>
             <div class="course-content">
                 <h3 class="course-title">${course.title}</h3>
                 <p class="course-author">by @${course.author}</p>
@@ -69,288 +61,239 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span><i class="fas fa-eye"></i> ${course.views?.toLocaleString() || 0}</span>
                     <span class="course-category">${course.category}</span>
                 </div>
-            </div>
-            ${canDelete ? `
-            <div class="course-actions">
-                <button class="action-btn delete-btn" title="Xóa khóa học" data-course-id="${course.id}" data-course-title="${course.title}">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>` : ''}`;
-
-        card.addEventListener('click', (e) => {
-            if (!e.target.closest('.action-btn')) {
-                window.open(course.link, '_blank');
-            }
-        });
-        
+            </div>`;
+        card.addEventListener('click', () => window.open(course.link, '_blank'));
         return card;
     }
 
-    // --- CẬP NHẬT GIAO DIỆN NGƯỜI DÙNG ---
-    function updateUIForLoggedInUser() {
-        const userActionsDiv = document.getElementById('user-actions');
-        const adminPanelBtn = document.getElementById('adminPanelBtn');
-        const uploadBtn = document.getElementById('uploadBtn');
-
-        if (currentUser) {
-            const isAdmin = currentUser.role === 'ADMIN';
-            userActionsDiv.innerHTML = `
-                <button class="btn btn-secondary" id="userBtn">
-                    <i class="fas ${isAdmin ? 'fa-crown' : 'fa-user'}"></i> ${currentUser.username}
-                </button>
-                <button class="btn btn-secondary cursor-pointer" id="logoutBtn" title="Đăng xuất">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>`;
-            
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            adminPanelBtn.style.display = (isAdmin || currentUser.role === 'SUB_ADMIN') ? 'inline-flex' : 'none';
-            uploadBtn.disabled = false;
-        } else {
-            userActionsDiv.innerHTML = `
-                <button class="btn btn-secondary cursor-pointer" id="authBtn">
-                    <i class="fas fa-sign-in-alt"></i> Đăng nhập / Đăng ký
-                </button>`;
-            
-            document.getElementById('authBtn').addEventListener('click', () => toggleModal('authModal', true));
-            adminPanelBtn.style.display = 'none';
-            uploadBtn.disabled = true;
-        }
-    }
-
-    // --- XÁC THỰC VÀ HÀNH ĐỘNG ---
-    async function login(identifier, password) {
+    // --- AUTHENTICATION ---
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(btn, 'Đang đăng nhập...');
         try {
-            const response = await fetch(`${API_URL}/api/login`, {
+            const data = await apiRequest('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier, password })
+                body: JSON.stringify({
+                    identifier: document.getElementById('loginIdentifier').value,
+                    password: document.getElementById('loginPassword').value,
+                }),
             });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message);
-
             currentUser = data.user;
-            showNotification(`Chào mừng ${currentUser.username}!`, 'success');
-            toggleModal('authModal', false);
-            updateUIForLoggedInUser();
-            loadCourses();
+            setButtonSuccess(btn, 'Đăng nhập thành công!', () => {
+                toggleModal('authModal', false);
+                updateUIForLoggedInUser();
+            });
+            showNotification(`Chào mừng ${currentUser.username} trở lại!`, 'success');
         } catch (error) {
-            showNotification(error.message, 'error');
+            resetButton(btn, '<i class="fas fa-sign-in-alt"></i> Đăng nhập');
         }
     }
-    
-    async function register(username, email, password) {
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(btn, 'Đang đăng ký...');
         try {
-            const response = await fetch(`${API_URL}/api/register`, {
+            const data = await apiRequest('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, email, password })
+                body: JSON.stringify({
+                    username: document.getElementById('registerUsername').value,
+                    email: document.getElementById('registerEmail').value,
+                    password: document.getElementById('registerPassword').value,
+                }),
             });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message);
-
+            setButtonSuccess(btn, 'Đăng ký thành công!', () => {
+                document.querySelector('.auth-tab[data-tab="login"]').click();
+                document.getElementById('loginIdentifier').value = document.getElementById('registerEmail').value;
+            });
             showNotification(data.message, 'success');
-            // Chuyển sang tab đăng nhập sau khi đăng ký thành công
-            document.querySelector('.auth-tab[data-tab="login"]').click();
-            document.getElementById('loginIdentifier').value = email;
-
         } catch (error) {
-            showNotification(error.message, 'error');
+            resetButton(btn, '<i class="fas fa-user-plus"></i> Đăng ký');
         }
     }
+    
+    async function handleUpload(e) {
+        e.preventDefault();
+        if(!currentUser) return showNotification('Bạn cần đăng nhập để đăng tải', 'error');
 
+        const btn = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(btn, 'Đang tải lên...');
 
-    function logout() {
-        currentUser = null;
-        showNotification('Đã đăng xuất.', 'info');
-        updateUIForLoggedInUser();
-        loadCourses();
-    }
-
-    async function handleCourseUpload(title, link, category) {
         try {
-            const response = await fetch(`${API_URL}/api/courses`, {
+             await apiRequest('/api/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, link, category, ownerId: currentUser.id, ownerUsername: currentUser.username })
+                body: JSON.stringify({
+                    title: document.getElementById('courseTitle').value,
+                    link: document.getElementById('courseLink').value,
+                    category: document.getElementById('courseCategory').value,
+                    ownerId: currentUser.id,
+                    ownerUsername: currentUser.username
+                }),
             });
-            if (!response.ok) throw new Error((await response.json()).message);
-
-            showNotification('Đăng tải khóa học thành công!', 'success');
-            toggleModal('uploadModal', false);
-            loadCourses();
-        } catch (error) {
-            showNotification(error.message, 'error');
+            setButtonSuccess(btn, 'Đăng tải thành công!', () => {
+                toggleModal('uploadModal', false);
+                e.target.reset();
+                loadCourses();
+            });
+            showNotification('Khóa học của bạn đã được đăng tải!', 'success');
+        } catch(error) {
+             resetButton(btn, '<i class="fas fa-check"></i> Đăng tải ngay');
         }
     }
 
-    async function handleCourseDelete(courseId) {
-        try {
-            const response = await fetch(`${API_URL}/api/courses/${courseId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.id, userRole: currentUser.role })
-            });
-            if (!response.ok) throw new Error((await response.json()).message);
 
-            showNotification('Đã xóa khóa học thành công.', 'success');
-            loadCourses();
-        } catch (error) {
-            showNotification(error.message, 'error');
-        }
-    }
-    
-    // --- ADMIN PANEL ---
-    async function openAdminPanel() {
-        if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUB_ADMIN')) {
-            showNotification('Bạn không có quyền truy cập.', 'error');
-            return;
-        }
-        const userListDiv = document.getElementById('userList');
-        userListDiv.innerHTML = 'Đang tải...';
-        toggleModal('adminModal', true);
+    // --- UI & EVENT LISTENERS ---
+    function setupEventListeners() {
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('loginBtn').addEventListener('click', () => toggleModal('authModal', true));
+        document.getElementById('uploadBtn').addEventListener('click', () => toggleModal('uploadModal', true));
 
-        try {
-            const response = await fetch(`${API_URL}/api/users`);
-            const users = await response.json();
-            
-            userListDiv.innerHTML = '';
-            users.forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                
-                // Admin có thể thăng cấp cho Member
-                const canPromote = currentUser.role === 'ADMIN' && user.role === 'MEMBER';
-                
-                userItem.innerHTML = `
-                    <div class="user-info">
-                        <span class="username">${user.username}</span>
-                        (<span class="email">${user.email}</span>)
-                        <span class="role ${user.role}">${user.role}</span>
-                    </div>
-                    <button class="btn promote-btn" data-user-id="${user.id}" ${!canPromote ? 'disabled' : ''}>
-                        ${user.role === 'MEMBER' ? 'Thăng cấp' : 'Đã thăng cấp'}
-                    </button>`;
-                userListDiv.appendChild(userItem);
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => toggleModal(btn.closest('.modal').id, false));
+        });
+        
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => e.target === modal && toggleModal(modal.id, false));
+        });
+
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelector('.auth-tab.active').classList.remove('active');
+                document.querySelector('.auth-form.active').classList.remove('active');
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab + 'Form').classList.add('active');
             });
-        } catch (error) {
-            userListDiv.innerHTML = 'Không thể tải danh sách người dùng.';
-        }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        document.getElementById('uploadForm').addEventListener('submit', handleUpload);
+        
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => toggleModal(modal.id, false));
+            }
+        });
     }
     
-    async function handleUserPromotion(userId) {
-        try {
-            const response = await fetch(`${API_URL}/api/users/${userId}/promote`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, adminRole: currentUser.role })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message);
-            
-            showNotification(data.message, 'success');
-            openAdminPanel(); // Tải lại danh sách
-        } catch (error) {
-            showNotification(error.message, 'error');
-        }
+    function handleSearch(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('#courseGrid .course-card, #recentCourses .course-card').forEach(card => {
+            const title = card.querySelector('.course-title').textContent.toLowerCase();
+            const author = card.querySelector('.course-author').textContent.toLowerCase();
+            const category = card.querySelector('.course-category').textContent.toLowerCase();
+            card.style.display = (title.includes(query) || author.includes(query) || category.includes(query)) ? 'block' : 'none';
+        });
     }
-    
-    // --- CÁC HÀM TIỆN ÍCH ---
+
+    function updateUIForLoggedInUser() {
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('uploadBtn').style.display = 'flex';
+
+        const navButtons = document.getElementById('navButtons');
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'btn btn-secondary cursor-pointer';
+        logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> ${currentUser.username}`;
+        logoutBtn.onclick = () => {
+            currentUser = null;
+            showNotification('Đã đăng xuất!', 'info');
+            // Simple reload to reset state
+            location.reload();
+        };
+        navButtons.appendChild(logoutBtn);
+    }
+
+    // --- HELPERS ---
     function toggleModal(modalId, show) {
-        document.getElementById(modalId).style.display = show ? 'flex' : 'none';
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = show ? 'flex' : 'none';
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const icon = document.querySelector('#themeToggle i');
+        icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    function setButtonLoading(btn, text) {
+        btn.disabled = true;
+        btn.innerHTML = `<div class="loading"></div> ${text}`;
+    }
+
+    function setButtonSuccess(btn, text, callback) {
+        btn.innerHTML = `<i class="fas fa-check"></i> ${text}`;
+        btn.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+        setTimeout(() => {
+            callback();
+            resetButton(btn, ''); // Reset button state after action
+        }, 1500);
+    }
+
+    function resetButton(btn, originalText) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.background = '';
     }
 
     function showNotification(message, type = 'info') {
-        const container = document.getElementById('notification-container');
+        const colors = { success: 'var(--accent-green)', error: '#ff4757', info: 'var(--accent-neon)' };
+        const icon = { success: 'check-circle', error: 'exclamation-triangle', info: 'info-circle' };
+
         const notification = document.createElement('div');
-        notification.className = 'notification';
-        const colors = { success: '#28a745', error: '#dc3545', info: '#17a2b8' };
-        notification.style.borderColor = colors[type];
-        notification.textContent = message;
-        container.appendChild(notification);
+        notification.style.cssText = `
+            position: fixed; top: 2rem; right: 2rem; background: var(--bg-card);
+            color: var(--text-primary); padding: 1rem 1.5rem; border-radius: 12px;
+            border: 2px solid ${colors[type]}; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 3000; animation: slideInRight 0.3s ease; max-width: 300px;
+        `;
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-${icon[type]}" style="color: ${colors[type]}; font-size: 1.2rem;"></i>
+                <div>${message}</div>
+                <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0;"><i class="fas fa-times"></i></button>
+            </div>`;
+        document.body.appendChild(notification);
         setTimeout(() => {
-             notification.style.animation = 'slideOut 0.5s forwards';
-             setTimeout(() => notification.remove(), 500);
-        }, 4000);
+            notification.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+
+    function initializeBackgroundAnimation() {
+        const container = document.getElementById('bgAnimation');
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = `${Math.random() * 100}%`;
+            p.style.animationDelay = `${Math.random() * 10}s`;
+            p.style.animationDuration = `${Math.random() * 10 + 10}s`;
+            container.appendChild(p);
+        }
     }
     
-    // --- LẮNG NGHE SỰ KIỆN ---
-    function setupEventListeners() {
-        // Đóng Modal
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
-        });
-
-        // Mở Modal
-        document.getElementById('uploadBtn').addEventListener('click', () => toggleModal('uploadModal', true));
-        document.getElementById('adminPanelBtn').addEventListener('click', openAdminPanel);
-
-        // Chuyển Tab Đăng nhập / Đăng ký
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const target = this.dataset.tab;
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(`${target}Form`).classList.add('active');
-            });
-        });
-
-
-        // Form Submit
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            login(
-                document.getElementById('loginIdentifier').value,
-                document.getElementById('loginPassword').value
-            );
-        });
-
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            register(
-                document.getElementById('registerUsername').value,
-                document.getElementById('registerEmail').value,
-                document.getElementById('registerPassword').value
-            );
-        });
-
-        document.getElementById('uploadForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleCourseUpload(
-                document.getElementById('courseTitle').value,
-                document.getElementById('courseLink').value,
-                document.getElementById('courseCategory').value
-            );
-            e.target.reset();
-        });
-
-        // Event Delegation cho các nút động
-        document.body.addEventListener('click', (e) => {
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn) {
-                const { courseId, courseTitle } = deleteBtn.dataset;
-                if (confirm(`Bạn có chắc muốn xóa khóa học "${courseTitle}"?`)) {
-                    handleCourseDelete(courseId);
-                }
-            }
-            
-            const promoteBtn = e.target.closest('.promote-btn');
-            if (promoteBtn && !promoteBtn.disabled) {
-                 const { userId } = promoteBtn.dataset;
-                 if (confirm(`Bạn có muốn thăng cấp người dùng này lên Phó Admin?`)) {
-                    handleUserPromotion(userId);
-                }
-            }
-        });
-        
-        // Theme Toggle
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('light-theme');
-            const icon = document.querySelector('#themeToggle i');
-            icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
-        });
+    function setupFooter() {
+        const footer = document.querySelector('footer');
+        footer.innerHTML = `
+            <div><i class="fas fa-heart" style="color: #ff6b6b;"></i> Made with love by the dev community</div>
+            <div style="font-size: 0.8rem; margin-top: 0.5rem;">© ${new Date().getFullYear()} CourseHub Infinity. All rights reserved.</div>
+        `;
     }
 
-    // --- KHỞI CHẠY ỨNG DỤNG ---
-    initializeApp();
+    // --- DYNAMIC STYLES ---
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+    `;
+    document.head.appendChild(style);
 });
