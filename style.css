@@ -1,0 +1,92 @@
+/* Dán toàn bộ nội dung trong thẻ <style> từ file index.html gốc của bạn vào đây */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #1a1a2e;
+    --bg-card: #16213e;
+    --accent-neon: #00ffff;
+    --accent-purple: #9d4edd;
+    --accent-green: #39ff14;
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --border-glow: rgba(0, 255, 255, 0.3);
+}
+
+body {
+    font-family: 'Fira Code', monospace;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><text y="15" font-size="12" fill="%2300ffff">_</text></svg>'), auto;
+    overflow-x: hidden;
+}
+
+.cursor-pointer {
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><text y="15" font-size="14" fill="%2300ffff">▶</text></svg>'), pointer;
+}
+.cursor-delete {
+     cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="5" y="18" font-size="18" fill="red">🗑️</text></svg>'), pointer;
+}
+.cursor-admin {
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="5" y="18" font-size="18" fill="gold">👑</text></svg>'), pointer;
+}
+
+
+/* ... (Toàn bộ CSS còn lại của bạn) ... */
+
+/* Thêm CSS cho các nút actions */
+.course-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.course-card:hover .course-actions {
+    opacity: 1;
+}
+.action-btn {
+    background: #334;
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.action-btn.delete-btn:hover {
+    background: #e74c3c;
+}
+.action-btn.edit-btn:hover {
+    background: #3498db;
+}
+.action-btn.admin-btn:hover {
+    background: #f1c40f;
+}
+
+/* Badge */
+.user-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: var(--accent-purple);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+.admin-badge {
+    background: linear-gradient(45deg, #ffd700, #ff8c00);
+}
